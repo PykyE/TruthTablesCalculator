@@ -1,0 +1,128 @@
+body {
+  margin: 0;
+}
+
+* {
+  font-family: "Montserrat";
+}
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  background-color: beige;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.wrapper {
+  min-width: 80em;
+  height: 20em;
+  background-color: rgb(192, 209, 255);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.wrapper__buttons {
+  width: 25em;
+  height: 15em;
+  border-radius: 20px;
+  background-color: rgb(134, 167, 255);
+  display: grid;
+  padding: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.wrapper__buttons button {
+  width: 4em;
+  height: 2em;
+  border-radius: 15px;
+  background-color: rgb(100, 141, 255);
+  font-size: 18px;
+  font-weight: bold;
+  border-style: none;
+  margin: auto;
+  transition: all 0.1s ease;
+}
+
+.wrapper__buttons button:active {
+  transform: scale(0.9);
+}
+
+.wrapper__buttons button:hover {
+  box-shadow: 0px 0px 0px 3px rgb(203, 203, 253);
+}
+
+.wrapper__buttons button:focus and :not(active) {
+  outline: 10px solid white;
+}
+
+.wrapper__buttons #lastItem {
+  grid-row-start: 3;
+  grid-column-start: 4;
+}
+
+.wrapper__expression {
+  width: 40em;
+  height: 15em;
+  background-color: rgb(134, 167, 255);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.wrapper__expression * {
+  margin: 20px 0px;
+}
+
+.wrapper__expression input {
+  min-width: 20em;
+  min-height: 3em;
+  font-size: 16px;
+  border-radius: 10px;
+  border-style: none;
+  transition: box-shadow 0.3s ease-in;
+  text-align: center;
+  letter-spacing: 5px;
+  display: flex;
+}
+
+.wrapper__expression input:focus {
+  outline: none;
+  transform: scale(120%);
+}
+
+.wrapper__expression button {
+  border-radius: 20px;
+  border-style: none;
+  background-color: rgb(159, 159, 255);
+  width: 8em;
+  height: 3em;
+  transition: all 0.3s ease;
+}
+
+.wrapper__expression button:hover {
+  background-color: rgb(104, 104, 255);
+}
+
+.resultGrid {
+  width: 30em;
+  height: 30em;
+  border-radius: 20px;
+  background-color: rgb(134, 167, 255);
+  display: grid;
+  padding: 10px;
+  margin-top: 20px;
+  gap: 20px;
+}
+
+.resultGrid h3 {
+  margin: auto;
+}
