@@ -40,8 +40,47 @@ function getNumberOfVariables() {
       }
     });
   }
-
   return count;
+}
+
+function _not(arr) {
+  return arr.map((item) => {
+    return item === "V" ? "F" : "V";
+  });
+}
+
+function _and(arr, arr2) {
+  verifLengths(arr, arr2);
+  return arr.map((item, index) => {
+    return item === "V" && arr2[index] === "V" ? "V" : "F";
+  });
+}
+
+function _or(arr, arr2) {
+  verifLengths(arr, arr2);
+  return arr.map((item, index) => {
+    return item === "V" || arr2[index] === "V" ? "V" : "F";
+  });
+}
+
+function _conditional(arr, arr2) {
+  verifLengths(arr, arr2);
+  return arr.map((item, index) => {
+    return item === "V" && arr2[index] === "F" ? "F" : "V";
+  });
+}
+
+function _biConditional(arr, arr2) {
+  verifLengths(arr, arr2);
+  return arr.map((item, index) => {
+    return item === arr2[index] ? "V" : "F";
+  });
+}
+
+function verifLengths(arr, arr2) {
+  if (arr.length !== arr2.length) {
+    throw new Error("Wrong sized arrays");
+  }
 }
 
 function createTable() {
