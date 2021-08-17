@@ -1,9 +1,10 @@
 let input = document.getElementById("expression");
-// input.value = "(p→~q)v(q→~r)";
+// input.value = "((p→(~q))v(q→(~r)))";
 // input.value = "~(~p→~q)";
 // input.value = "~(p→q)v(~p^~q)";
 // input.value = "(p→q^~q)→~p";
 // input.value = "pv(p→q^r)";
+input.value = "(pv(p→(q^r)))";
 let usedVars = [];
 
 function handleInput(event) {
@@ -25,14 +26,12 @@ function handleInput(event) {
 
 function getNumberOfVariables() {
   let exp = input.value;
-  let count = 0;
   usedVars = [];
   let var_arr = ["p", "q", "r"];
 
   for (let i = 0; i < exp.length; i++) {
     var_arr.forEach((element) => {
       if (exp.charAt(i) === element) {
-        count++;
         usedVars.push(element.toUpperCase());
         var_arr = var_arr.filter((item) => {
           return item !== element;
@@ -40,7 +39,6 @@ function getNumberOfVariables() {
       }
     });
   }
-  return count;
 }
 
 function _not(arr) {
@@ -83,55 +81,149 @@ function verifLengths(arr, arr2) {
   }
 }
 
-function createTable() {
-  let variableCount = getNumberOfVariables();
+function getParts() {
+  let exp = input.value;
+
+  let return_var = [];
+
+  let indexOpen, indexClose;
+  let usedIndexOpen = [];
+  let usedIndexClose = [];
+
+  let openCount = getCountOpeningPar(exp);
+  let closeCount = getCountClosingPar(exp);
+
+  while (
+    usedIndexOpen.length !== openCount &&
+    usedIndexClose.length !== closeCount
+  ) {
+    for (let i = 0; i < exp.length; i++) {
+      if (exp.charAt(i) === "(") {
+        if (usedIndexOpen.includes(i)) {
+          continue;
+        } else {
+          indexOpen = i;
+          usedIndexOpen.push(i);
+          break;
+        }
+      }
+    }
+    for (let i = exp.length; i > 0; i--) {
+      if (exp.charAt(i) === ")") {
+        if (usedIndexClose.includes(i)) {
+          continue;
+        } else {
+          indexClose = i + 1;
+          usedIndexClose.push(i);
+          break;
+        }
+      }
+    }
+    return_var.push(exp.substring(indexOpen, indexClose));
+  }
+  return return_var.reverse();
+}
+
+function getCountOpeningPar(exp) {
+  let count = 0;
+  for (let i = 0; i < exp.length; i++) {
+    if (exp.charAt(i) === "(") {
+      count++;
+    }
+  }
+  return count;
+}
+
+function getCountClosingPar(exp) {
+  let count = 0;
+  for (let i = 0; i < exp.length; i++) {
+    if (exp.charAt(i) === ")") {
+      count++;
+    }
+  }
+  return count;
+}
+
+function createMatrix() {
+  getNumberOfVariables();
+  let expressionParts = getParts();
+  let numberOfVariables = usedVars.length;
+  const numberOfRows = Math.pow(2, numberOfVariables);
+  const numberOfColumns = numberOfVariables + expressionParts.length;
+  let dataMatrix = new Array(numberOfColumns);
+  let swapBoolValue = numberOfRows / 2;
+
+  for (let i = 0; i < numberOfColumns; i++) {
+    dataMatrix[i] = new Array(Math.pow(2, numberOfVariables));
+    let value = true;
+    for (let j = 0; j <= numberOfRows; j++) {
+      if (j === 0) {
+        if (i < numberOfVariables) {
+          dataMatrix[i][j] = usedVars[i];
+        } else {
+          dataMatrix[i][j] = expressionParts[i - numberOfVariables];
+        }
+        continue;
+      }
+      if ((j - 1) % swapBoolValue === 0 && j - 1 !== 0) {
+        value = !value;
+      }
+      if (i < numberOfVariables) {
+        dataMatrix[i][j] = value ? "V" : "F";
+      } else {
+        dataMatrix[i][j] = "XD";
+        const regex = /\(~?[pqr][\^↔→v]~?[pqr]\)/g;
+        let expression = expressionParts[i - numberOfVariables];
+        if (regex.test(expression)) {
+          let var1 = expression.charAt(expression.indexOf("(") + 1);
+          let var2 = expression.charAt(expression.indexOf(")") - 1);
+          console.log(var1);
+          console.log(var2);
+        }
+      }
+    }
+    swapBoolValue /= 2;
+  }
+  createGrid(dataMatrix, numberOfVariables);
+}
+
+function getColumn(dataMatrix, str) {
+  for (let i = 0; i < dataMatrix.length; i++) {
+    if (dataMatrix[i][0] === str) {
+      return dataMatrix[i];
+    }
+  }
+  return null;
+}
+
+function createGrid(dataMatrix, numberOfVariables) {
   let container = document.getElementById("container");
   let grid = document.createElement("div");
-  let oldGrid = document.getElementById("resultGrid");
-  if (oldGrid) {
-    container.removeChild(oldGrid);
-  }
-  if (variableCount === 0) {
+  removeOldGrid();
+  if (numberOfVariables === 0) {
     return;
   }
   grid.className = "resultGrid";
   grid.id = "resultGrid";
-  grid.style.gridTemplateColumns = "repeat(" + variableCount + ", 1fr)";
-  grid.style.gridTemplateRows =
-    "repeat(" + (Math.pow(2, usedVars.length) + 1) + ", 1fr)";
+  grid.style.gridTemplateColumns = "repeat(" + dataMatrix.length + ", 1fr)";
+  grid.style.gridTemplateRows = "repeat(" + dataMatrix[0].length + ", 1fr)";
 
-  let matrix = new Array(variableCount);
-  const exponent = Math.pow(2, usedVars.length);
-  let change = exponent / 2;
-
-  for (let i = 0; i < usedVars.length; i++) {
-    matrix[i] = new Array(Math.pow(2, usedVars.length) + 1);
-    let value = true;
-    for (let j = 0; j <= exponent; j++) {
-      if (j === 0) {
-        matrix[i][j] = usedVars[i];
-        continue;
-      }
-      if ((j - 1) % change === 0 && j - 1 !== 0) {
-        value = !value;
-      }
-      matrix[i][j] = value ? "V" : "F";
-    }
-    change /= 2;
-  }
-
-  console.log(matrix);
-
-  fillGrid(grid, matrix);
-}
-
-function fillGrid(grid, matrix) {
-  for (let j = 0; j < matrix[0].length; j++) {
-    for (let i = 0; i < matrix.length; i++) {
+  for (let j = 0; j < dataMatrix[0].length; j++) {
+    for (let i = 0; i < dataMatrix.length; i++) {
       let newChild = document.createElement("h3");
-      newChild.innerText = matrix[i][j];
+      if (j === 0) {
+        newChild.style.color = "#f5f5dc";
+      }
+      newChild.innerText = dataMatrix[i][j];
       grid.appendChild(newChild);
     }
   }
   container.appendChild(grid);
+}
+
+function removeOldGrid() {
+  let oldGrid = document.getElementById("resultGrid");
+  if (oldGrid) {
+    container.removeChild(oldGrid);
+  }
 }
