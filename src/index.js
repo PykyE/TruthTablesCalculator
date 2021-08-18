@@ -139,6 +139,12 @@ function createMatrix() {
           }
         }
         break;
+      case "~":
+        if (true) {
+        
+        }
+
+        break;
     }
   }
 
