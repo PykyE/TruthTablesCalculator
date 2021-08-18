@@ -4,7 +4,7 @@ let input = document.getElementById("expression");
 // input.value = "~(p→q)v(~p^~q)";
 // input.value = "(p→q^~q)→~p";
 // input.value = "pv(p→q^r)";
-input.value = "(pv(p→(q^r)))";
+input.value = "(pv(p→(~q^r)))";
 let usedVars = [];
 
 function handleInput(event) {
@@ -81,75 +81,11 @@ function verifLengths(arr, arr2) {
   }
 }
 
-function getParts() {
-  let exp = input.value;
-
-  let return_var = [];
-
-  let indexOpen, indexClose;
-  let usedIndexOpen = [];
-  let usedIndexClose = [];
-
-  let openCount = getCountOpeningPar(exp);
-  let closeCount = getCountClosingPar(exp);
-
-  while (
-    usedIndexOpen.length !== openCount &&
-    usedIndexClose.length !== closeCount
-  ) {
-    for (let i = 0; i < exp.length; i++) {
-      if (exp.charAt(i) === "(") {
-        if (usedIndexOpen.includes(i)) {
-          continue;
-        } else {
-          indexOpen = i;
-          usedIndexOpen.push(i);
-          break;
-        }
-      }
-    }
-    for (let i = exp.length; i > 0; i--) {
-      if (exp.charAt(i) === ")") {
-        if (usedIndexClose.includes(i)) {
-          continue;
-        } else {
-          indexClose = i + 1;
-          usedIndexClose.push(i);
-          break;
-        }
-      }
-    }
-    return_var.push(exp.substring(indexOpen, indexClose));
-  }
-  return return_var.reverse();
-}
-
-function getCountOpeningPar(exp) {
-  let count = 0;
-  for (let i = 0; i < exp.length; i++) {
-    if (exp.charAt(i) === "(") {
-      count++;
-    }
-  }
-  return count;
-}
-
-function getCountClosingPar(exp) {
-  let count = 0;
-  for (let i = 0; i < exp.length; i++) {
-    if (exp.charAt(i) === ")") {
-      count++;
-    }
-  }
-  return count;
-}
-
 function createMatrix() {
   getNumberOfVariables();
-  let expressionParts = getParts();
   let numberOfVariables = usedVars.length;
   const numberOfRows = Math.pow(2, numberOfVariables);
-  const numberOfColumns = numberOfVariables + expressionParts.length;
+  const numberOfColumns = numberOfVariables + input.value.length;
   let dataMatrix = new Array(numberOfColumns);
   let swapBoolValue = numberOfRows / 2;
 
@@ -161,7 +97,7 @@ function createMatrix() {
         if (i < numberOfVariables) {
           dataMatrix[i][j] = usedVars[i];
         } else {
-          dataMatrix[i][j] = expressionParts[i - numberOfVariables];
+          dataMatrix[i][j] = input.value.charAt(i - numberOfVariables);
         }
         continue;
       }
@@ -171,19 +107,41 @@ function createMatrix() {
       if (i < numberOfVariables) {
         dataMatrix[i][j] = value ? "V" : "F";
       } else {
-        dataMatrix[i][j] = "XD";
-        const regex = /\(~?[pqr][\^↔→v]~?[pqr]\)/g;
-        let expression = expressionParts[i - numberOfVariables];
-        if (regex.test(expression)) {
-          let var1 = expression.charAt(expression.indexOf("(") + 1);
-          let var2 = expression.charAt(expression.indexOf(")") - 1);
-          console.log(var1);
-          console.log(var2);
-        }
+        dataMatrix[i][j] = "";
       }
     }
     swapBoolValue /= 2;
   }
+
+  for (let i = 0; i < numberOfColumns; i++) {
+    switch (dataMatrix[i][0]) {
+      case "p":
+        for (let a = 0; a < numberOfVariables; a++) {
+          if (dataMatrix[a][0] === "P") {
+            let slice = ["p"].concat(dataMatrix[a].slice(1));
+            dataMatrix[i] = slice;
+          }
+        }
+        break;
+      case "q":
+        for (let a = 0; a < numberOfVariables; a++) {
+          if (dataMatrix[a][0] === "Q") {
+            let slice = ["q"].concat(dataMatrix[a].slice(1));
+            dataMatrix[i] = slice;
+          }
+        }
+        break;
+      case "r":
+        for (let a = 0; a < numberOfVariables; a++) {
+          if (dataMatrix[a][0] === "R") {
+            let slice = ["r"].concat(dataMatrix[a].slice(1));
+            dataMatrix[i] = slice;
+          }
+        }
+        break;
+    }
+  }
+
   createGrid(dataMatrix, numberOfVariables);
 }
 

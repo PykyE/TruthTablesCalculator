@@ -113,8 +113,8 @@ body {
 }
 
 .resultGrid {
-  width: 30em;
-  height: 30em;
+  min-width: 35em;
+  min-height: 30em;
   border-radius: 20px;
   background-color: rgb(134, 167, 255);
   display: grid;
