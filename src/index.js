@@ -4,7 +4,7 @@ let input = document.getElementById("expression");
 // input.value = "~(p→q)v(~p^~q)";
 // input.value = "(p→q^~q)→~p";
 // input.value = "pv(p→q^r)";
-input.value = "(pv(p→(~q^r)))";
+input.value = "(pv~(~p→(~q^~r)))";
 let usedVars = [];
 
 function handleInput(event) {
@@ -89,6 +89,7 @@ function createMatrix() {
   let dataMatrix = new Array(numberOfColumns);
   let swapBoolValue = numberOfRows / 2;
 
+  //Fill used variables columns
   for (let i = 0; i < numberOfColumns; i++) {
     dataMatrix[i] = new Array(Math.pow(2, numberOfVariables));
     let value = true;
@@ -113,6 +114,7 @@ function createMatrix() {
     swapBoolValue /= 2;
   }
 
+  //Fill variables
   for (let i = 0; i < numberOfColumns; i++) {
     switch (dataMatrix[i][0]) {
       case "p":
@@ -139,12 +141,91 @@ function createMatrix() {
           }
         }
         break;
-      case "~":
-        if (true) {
-        
-        }
+    }
+  }
 
+  //Fill _not operations for variables
+  for (let i = 0; i < numberOfColumns; i++) {
+    switch (dataMatrix[i][0]) {
+      case "~":
+        if (
+          dataMatrix[i + 1][0] === "q" ||
+          dataMatrix[i + 1][0] === "p" ||
+          dataMatrix[i + 1][0] === "r"
+        ) {
+          let slice = dataMatrix[i + 1].slice(1);
+          slice = _not(slice);
+          dataMatrix[i] = ["~"].concat(slice);
+        }
         break;
+    }
+  }
+
+  const symbols = ["P", "Q", "R", "(", ")", "~"];
+  const variables = ["p", "q", "r"];
+
+  function solveExpression(expression) {
+    let arrReturn = [];
+    let leftPart = expression.left;
+    let rightPart = expression.right;
+    let leftNot = expression.left_not;
+    let rightNot = expression.right_not;
+    if (variables.includes(leftPart) && variables.includes(rightPart)) {
+      let firstVar = getColumn(dataMatrix, leftPart).slice(1);
+      let firstParam = leftNot === true ? _not(firstVar) : firstVar;
+      let secondVar = getColumn(dataMatrix, rightPart).slice(1);
+      let secondParam = rightNot === true ? _not(secondVar) : secondVar;
+      switch (expression.symbol) {
+        case "^":
+          arrReturn = [expression.symbol].concat(_and(firstParam, secondParam));
+          break;
+        case "v":
+          arrReturn = [expression.symbol].concat(_or(firstParam, secondParam));
+          break;
+        case "→":
+          arrReturn = [expression.symbol].concat(
+            _conditional(firstParam, secondParam)
+          );
+          break;
+        case "↔":
+          arrReturn = [expression.symbol].concat(
+            _biConditional(firstParam, secondParam)
+          );
+          break;
+      }
+    } else {
+      //ugly stuff
+    }
+    return arrReturn;
+  }
+
+  //Create expressions
+  let expressions = [];
+  let usedIndexes = [];
+  for (let i = 0; i < numberOfColumns; i++) {
+    let symbol = dataMatrix[i][0];
+    if (!symbols.concat(variables).includes(symbol)) {
+      usedIndexes.push(i);
+      let a = { symbol: symbol };
+      //create left part
+      let left = dataMatrix[i - 1][0];
+      if (variables.includes(left)) {
+        a.left = left;
+        let notVerif = dataMatrix[i - 2][0];
+        a.left_not = notVerif === "~" ? true : false;
+      } else {
+
+      }
+      //create right part
+      let notVerif = dataMatrix[i + 1][0];
+      a.right_not = notVerif === "~" ? true : false;
+      let right = a.right_not ? dataMatrix[i + 2][0] : dataMatrix[i + 1][0];
+      if (variables.includes(right)) {
+        a.right = right;
+      } else {
+        
+      }
+      expressions.push(a);
     }
   }
 
