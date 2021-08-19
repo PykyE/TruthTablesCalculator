@@ -1,11 +1,4 @@
 let input = document.getElementById("expression");
-// input.value = "((p→(~q))v(q→(~r)))";
-// input.value = "~(~p→~q)";
-// input.value = "~(p→q)v(~p^~q)";
-// input.value = "(p→q^~q)→~p";
-input.value = "pv(p→(q^r))";
-input.value = "pv((p^q)v(p→(q^r)))";
-// input.value = "(pv~(~p→(~q^~r)))";
 let usedVars = [];
 
 function handleInput(event) {
@@ -78,8 +71,6 @@ function _biConditional(arr, arr2) {
 
 function verifLengths(arr, arr2) {
   if (arr.length !== arr2.length) {
-    console.log(arr);
-    console.log(arr2);
     throw new Error("Wrong sized arrays");
   }
 }
@@ -224,11 +215,6 @@ function createMatrix() {
           let exptostring = tostring(currExp);
           if (rightPart === exptostring && currExp.solved) {
             secondParam = dataMatrix[currExp.index].slice(1);
-            if (expression.symbol === "→") {
-              console.log(leftPart);
-              console.log(rightPart);
-              console.log(dataMatrix[currExp.index].slice(0, 1));
-            }
             rightPass = true;
           }
         }
@@ -237,9 +223,6 @@ function createMatrix() {
         rightPass = true;
       }
       if (leftPass && rightPass) {
-        console.log(expression);
-        console.log(firstParam);
-        console.log(secondParam);
         switch (expression.symbol) {
           case "^":
             arrReturn = [expression.symbol].concat(
@@ -339,7 +322,8 @@ function createMatrix() {
   }
 
   let completedExpressions = 0;
-  while (completedExpressions !== expressions.length) {
+  let count = 0;
+  while (completedExpressions !== expressions.length && count < 1000) {
     for (let i = 0; i < expressions.length; i++) {
       if (!expressions[i].solved) {
         a = expressions[i];
@@ -352,10 +336,22 @@ function createMatrix() {
         continue;
       }
     }
+    count++;
   }
 
   function tostring(a) {
-    return "(" + a.left + a.symbol + a.right + ")";
+    let string = "(";
+    if (a.left_not) {
+      string += "~";
+    }
+    string += a.left;
+    string += a.symbol;
+    if (a.right_not) {
+      string += "~";
+    }
+    string += a.right;
+    string += ")";
+    return string;
   }
 
   createGrid(dataMatrix, numberOfVariables);
