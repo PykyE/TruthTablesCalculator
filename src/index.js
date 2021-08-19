@@ -3,8 +3,9 @@ let input = document.getElementById("expression");
 // input.value = "~(~p→~q)";
 // input.value = "~(p→q)v(~p^~q)";
 // input.value = "(p→q^~q)→~p";
-// input.value = "pv(p→q^r)";
-input.value = "(pv~(~p→(~q^~r)))";
+input.value = "pv(p→(q^r))";
+input.value = "pv((p^q)v(p→(q^r)))";
+// input.value = "(pv~(~p→(~q^~r)))";
 let usedVars = [];
 
 function handleInput(event) {
@@ -77,6 +78,8 @@ function _biConditional(arr, arr2) {
 
 function verifLengths(arr, arr2) {
   if (arr.length !== arr2.length) {
+    console.log(arr);
+    console.log(arr2);
     throw new Error("Wrong sized arrays");
   }
 }
@@ -165,7 +168,7 @@ function createMatrix() {
   const variables = ["p", "q", "r"];
 
   function solveExpression(expression) {
-    let arrReturn = [];
+    let arrReturn;
     let leftPart = expression.left;
     let rightPart = expression.right;
     let leftNot = expression.left_not;
@@ -178,35 +181,110 @@ function createMatrix() {
       switch (expression.symbol) {
         case "^":
           arrReturn = [expression.symbol].concat(_and(firstParam, secondParam));
+          expression.solved = true;
           break;
         case "v":
           arrReturn = [expression.symbol].concat(_or(firstParam, secondParam));
+          expression.solved = true;
           break;
         case "→":
           arrReturn = [expression.symbol].concat(
             _conditional(firstParam, secondParam)
           );
+          expression.solved = true;
           break;
         case "↔":
           arrReturn = [expression.symbol].concat(
             _biConditional(firstParam, secondParam)
           );
+          expression.solved = true;
           break;
       }
     } else {
-      //ugly stuff
+      let leftPass = false;
+      let rightPass = false;
+      let firstParam;
+      let secondParam;
+      if (!variables.includes(leftPart)) {
+        for (let i = 0; i < expressions.length; i++) {
+          let currExp = expressions[i];
+          let exptostring = tostring(currExp);
+          if (leftPart === exptostring && currExp.solved) {
+            firstParam = dataMatrix[currExp.index].slice(1);
+            leftPass = true;
+          }
+        }
+      } else {
+        firstParam = getColumn(dataMatrix, leftPart).slice(1);
+        leftPass = true;
+      }
+      if (!variables.includes(rightPart)) {
+        for (let i = 0; i < expressions.length; i++) {
+          let currExp = expressions[i];
+          let exptostring = tostring(currExp);
+          if (rightPart === exptostring && currExp.solved) {
+            secondParam = dataMatrix[currExp.index].slice(1);
+            if (expression.symbol === "→") {
+              console.log(leftPart);
+              console.log(rightPart);
+              console.log(dataMatrix[currExp.index].slice(0, 1));
+            }
+            rightPass = true;
+          }
+        }
+      } else {
+        secondParam = getColumn(dataMatrix, rightPart).slice(1);
+        rightPass = true;
+      }
+      if (leftPass && rightPass) {
+        console.log(expression);
+        console.log(firstParam);
+        console.log(secondParam);
+        switch (expression.symbol) {
+          case "^":
+            arrReturn = [expression.symbol].concat(
+              _and(firstParam, secondParam)
+            );
+            expression.solved = true;
+            break;
+          case "v":
+            arrReturn = [expression.symbol].concat(
+              _or(firstParam, secondParam)
+            );
+            expression.solved = true;
+            break;
+          case "→":
+            arrReturn = [expression.symbol].concat(
+              _conditional(firstParam, secondParam)
+            );
+            expression.solved = true;
+            break;
+          case "↔":
+            arrReturn = [expression.symbol].concat(
+              _biConditional(firstParam, secondParam)
+            );
+            expression.solved = true;
+            break;
+        }
+      }
     }
     return arrReturn;
   }
 
-  //Create expressions
+  //Create expressions per symbol
   let expressions = [];
   let usedIndexes = [];
   for (let i = 0; i < numberOfColumns; i++) {
     let symbol = dataMatrix[i][0];
     if (!symbols.concat(variables).includes(symbol)) {
       usedIndexes.push(i);
-      let a = { symbol: symbol };
+      let a = {
+        symbol: symbol,
+        index: i,
+        left: "",
+        right: "",
+        solved: false,
+      };
       //create left part
       let left = dataMatrix[i - 1][0];
       if (variables.includes(left)) {
@@ -214,7 +292,22 @@ function createMatrix() {
         let notVerif = dataMatrix[i - 2][0];
         a.left_not = notVerif === "~" ? true : false;
       } else {
-
+        let i = a.index - 1;
+        let openPar = 0;
+        let closePar = 0;
+        let string = "";
+        for (i; i > 0; i--) {
+          string = string.concat(dataMatrix[i][0]);
+          if (dataMatrix[i][0] === "(") {
+            openPar++;
+          } else if (dataMatrix[i][0] === ")") {
+            closePar++;
+          }
+          if (openPar === closePar && openPar !== 0 && closePar !== 0) {
+            break;
+          }
+        }
+        a.left = string.split("").reverse().join("");
       }
       //create right part
       let notVerif = dataMatrix[i + 1][0];
@@ -223,10 +316,46 @@ function createMatrix() {
       if (variables.includes(right)) {
         a.right = right;
       } else {
-        
+        let i = a.index;
+        i += a.right_not ? 2 : 1;
+        let openPar = 0;
+        let closePar = 0;
+        let string = "";
+        for (i; i < dataMatrix.length; i++) {
+          string = string.concat(dataMatrix[i][0].toString());
+          if (dataMatrix[i][0] === "(") {
+            openPar++;
+          } else if (dataMatrix[i][0] === ")") {
+            closePar++;
+          }
+          if (openPar === closePar && openPar !== 0 && closePar !== 0) {
+            break;
+          }
+        }
+        a.right = string;
       }
       expressions.push(a);
     }
+  }
+
+  let completedExpressions = 0;
+  while (completedExpressions !== expressions.length) {
+    for (let i = 0; i < expressions.length; i++) {
+      if (!expressions[i].solved) {
+        a = expressions[i];
+        result = solveExpression(a);
+        if (result) {
+          dataMatrix[a.index] = result;
+          completedExpressions++;
+        }
+      } else {
+        continue;
+      }
+    }
+  }
+
+  function tostring(a) {
+    return "(" + a.left + a.symbol + a.right + ")";
   }
 
   createGrid(dataMatrix, numberOfVariables);
